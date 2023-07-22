@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>BMI Calculator</title>
+  <style>
+    /* Reset some default styles */
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f1f1f1;
+    }
+
+    /* Main container styles */
+    .container {
+      width: 80%;
+      max-width: 500px;
+      margin: 50px auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Header styles */
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    /* BMI Result styles */
+    .bmi-result {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    /* Input styles */
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    /* Slider styles */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 5px;
+      background: #ddd;
+      outline: none;
+      margin: 10px 0;
+    }
+
+    /* Red color for heightSlider */
+    #heightSlider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #ff8080;
+      cursor: pointer;
+    }
+
+    /* Blue color for weightSlider */
+    #weightSlider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #80b3ff;
+      cursor: pointer;
+    }
+
+    /* Unit selection styles */
+    .unit-selection {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    /* Increase button size and add color */
+    button {
+      width: 100%; /* Increase button width to fill the container */
+      padding: 15px; /* Increase button padding for a larger size */
+      font-size: 16px;
+      background-color: #4CAF50; /* Green color for the button background */
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    /* Hover effect on buttons */
+    button:hover {
+      background-color: #45a049;
+    }
+
+    /* Animation for result interpretation */
+    .interpretation {
+      display: none;
+      animation: fadeIn 1s;
+    }
+
+    /* Animation keyframes */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Media query for responsiveness */
+    @media (max-width: 600px) {
+      .container {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>BMI Calculator</h1>
+    <form>
+      <label for="height">Height (cm):</label>
+      <input type="number" id="height" placeholder="Enter your height" required>
+      <input type="range" min="10" max="300" step="1" value="170" id="heightSlider">
+
+      <label for="weight">Weight (kg):</label>
+      <input type="number" id="weight" placeholder="Enter your weight" required>
+      <input type="range" min="10" max="500" step="1" value="70" id="weightSlider">
+
+      <label for="unit">Select Unit:</label>
+      <select id="unit" onchange="updateLabels()">
+        <option value="metric" selected>Metric (kg/cm)</option>
+        <option value="imperial">Imperial (lb/in)</option>
+      </select>
+
+      <div class="unit-selection">
+        <!-- Increase button size and add color -->
+        <button type="button" onclick="calculateBMI()" style="background-color: #4CAF50;">Calculate BMI</button>
+        <button type="button" onclick="resetValues()" style="background-color: #f44336;">Reset</button>
+      </div>
+
+      <div class="bmi-result">
+        <p>Your BMI: <span id="bmiValue">0</span></p>
+        <p class="interpretation" id="interpretation">Interpretation: <span></span></p>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Function to update input values when sliders are moved
+    function updateInputValues() {
+      const heightInput = document.getElementById("height");
+      const weightInput = document.getElementById("weight");
+      const heightSlider = document.getElementById("heightSlider");
+      const weightSlider = document.getElementById("weightSlider");
+
+      // Update input box values with the corresponding slider values
+      heightInput.value = heightSlider.value;
+      weightInput.value = weightSlider.value;
+    }
+
+    // Event listeners to call updateInputValues when sliders are moved
+    document.getElementById("heightSlider").addEventListener("input", updateInputValues);
+    document.getElementById("weightSlider").addEventListener("input", updateInputValues);
+
+    // Call updateInputValues initially to set the initial values in the input boxes
+    updateInputValues();
+
+    // Function to update input field titles based on the selected unit
+    function updateLabels() {
+      const unit = document.getElementById("unit").value;
+      const heightLabel = document.querySelector('label[for="height"]');
+      const weightLabel = document.querySelector('label[for="weight"]');
+      
+      if (unit === "imperial") {
+        heightLabel.textContent = "Height (inches):";
+        weightLabel.textContent = "Weight (pounds):";
+      } else {
+        heightLabel.textContent = "Height (cm):";
+        weightLabel.textContent = "Weight (kg):";
+      }
+    }
+
+    // Call updateLabels initially to set the initial titles based on the default unit
+    updateLabels();
+
+    function calculateBMI() {
+      const heightInput = document.getElementById("height");
+      const weightInput = document.getElementById("weight");
+      const heightSlider = document.getElementById("heightSlider");
+      const weightSlider = document.getElementById("weightSlider");
+      const bmiValueSpan = document.getElementById("bmiValue");
+      const interpretation = document.getElementById("interpretation");
+
+      const height = heightInput.value || heightSlider.value;
+      const weight = weightInput.value || weightSlider.value;
+      const unit = document.getElementById("unit").value;
+
+      let bmi = 0;
+
+      if (unit === "imperial") {
+        // Convert height from inches to meters and weight from pounds to kilograms
+        const heightInMeters = height * 0.0254;
+        const weightInKilograms = weight * 0.453592;
+        bmi = weightInKilograms / (heightInMeters * heightInMeters);
+      } else {
+        // For metric units, use height in centimeters and weight in kilograms directly
+        bmi = weight / ((height / 100) * (height / 100));
+      }
+
+      bmi = parseFloat(bmi.toFixed(2));
+      bmiValueSpan.innerText = bmi;
+
+      // Interpretation
+      interpretation.style.display = "block";
+      if (bmi < 18.5) {
+        interpretation.innerHTML = "Underweight";
+      } else if (bmi >= 18.5 && bmi < 24.9) {
+        interpretation.innerHTML = "Normal weight";
+      } else if (bmi >= 25 && bmi < 29.9) {
+        interpretation.innerHTML = "Overweight";
+      } else {
+        interpretation.innerHTML = "Obese";
+      }
+    }
+
+    function resetValues() {
+      const heightInput = document.getElementById("height");
+      const weightInput = document.getElementById("weight");
+      const heightSlider = document.getElementById("heightSlider");
+      const weightSlider = document.getElementById("weightSlider");
+      const bmiValueSpan = document.getElementById("bmiValue");
+      const interpretation = document.getElementById("interpretation");
+
+      heightInput.value = "";
+      weightInput.value = "";
+      heightSlider.value = 170;
+      weightSlider.value = 70;
+      bmiValueSpan.innerText = "0";
+      interpretation.style.display = "none";
+    }
+  </script>
+</body>
+</html>
